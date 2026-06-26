@@ -1,0 +1,107 @@
+/* ── BOURSES ── */
+.bourses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.bourse-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+  position: relative;
+  overflow: hidden;
+}
+.bourse-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--navy-light);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.bourse-card.statut-ouverte::before { background: var(--success); }
+.bourse-card.statut-bientot::before { background: var(--gold); }
+.bourse-card.statut-fermee::before  { background: var(--danger); }
+.bourse-card.statut-postule::before { background: var(--info); }
+
+.bourse-card:hover {
+  border-color: rgba(30,64,128,.25);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+/* Header */
+.bourse-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.bourse-header-left { display: flex; align-items: flex-start; gap: 12px; }
+.bourse-flag {
+  font-size: 28px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.bourse-name { font-size: 15px; font-weight: 700; color: var(--navy); line-height: 1.3; }
+.bourse-country { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+
+/* Status */
+.status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.status-ouverte { background: var(--success-dim); color: var(--success); }
+.status-fermee  { background: var(--danger-dim);  color: var(--danger); }
+.status-bientot { background: var(--warning-dim); color: var(--warning); }
+.status-postule { background: var(--info-dim);    color: var(--info); }
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-ouverte .status-dot { background: var(--success); }
+.status-fermee  .status-dot { background: var(--danger); }
+.status-bientot .status-dot { background: var(--warning); }
+.status-postule .status-dot { background: var(--info); }
+
+/* Description */
+.bourse-desc { font-size: 13px; color: var(--text-body); line-height: 1.6; }
+
+/* Deadline bar */
+.deadline-bar-wrap {}
+.deadline-bar-info { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.deadline-bar-info .days-left { font-weight: 700; }
+.days-left.urgent { color: var(--danger); }
+.days-left.soon   { color: var(--gold); }
+.days-left.safe   { color: var(--success); }
+.deadline-bar { height: 5px; background: var(--surface2); border-radius: 10px; overflow: hidden; }
+.deadline-fill { height: 100%; border-radius: 10px; transition: width .5s ease; }
+.deadline-fill.urgent { background: var(--danger); }
+.deadline-fill.soon   { background: var(--gold); }
+.deadline-fill.safe   { background: var(--success); }
+
+/* Footer */
+.bourse-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+.bourse-dates { display: flex; flex-direction: column; gap: 3px; }
+.bourse-date { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.bourse-date svg { width: 12px; height: 12px; color: var(--muted-light); }
+.bourse-date strong { color: var(--text-body); font-weight: 600; }
+
+/* Actions */
+.bourse-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+@media (max-width: 480px) {
+  .bourses-grid { grid-template-columns: 1fr; }
+}
+
