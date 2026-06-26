@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScholarTrack — Suivi de bourses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --surface2: #EEF2F7;
+    --accent: #3B82F6;
+    --accent-dim: rgba(59,130,246,.10);
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --text: #1E293B;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --radius: 12px;
+    --sidebar-w: 220px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    font-size: 14px;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: #1E293B;
+    border-right: 1px solid rgba(255,255,255,.08);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .logo-mark {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -.3px;
+  }
+  .logo-mark span { color: var(--accent); }
+  .logo-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  nav { padding: 16px 10px; flex: 1; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: rgba(255,255,255,.5);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all .15s;
+    margin-bottom: 2px;
+    user-select: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .nav-item.active { background: var(--accent); color: #fff; }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    font-size: 12px;
+    color: rgba(255,255,255,.3);
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0;
+    background: #fff;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .page-title { font-size: 18px; font-weight: 600; }
+  .page-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #2563EB; }
+  .btn-ghost { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-danger { background: rgba(239,68,68,.15); color: var(--danger); border: 1px solid rgba(239,68,68,.2); }
+
+  .content { padding: 28px 32px; flex: 1; }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── DASHBOARD ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .kpi-card.green::before { background: var(--success); }
+  .kpi-card.orange::before { background: var(--warning); }
+  .kpi-card.red::before { background: var(--danger); }
+
+  .kpi-label { font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-value { font-size: 36px; font-weight: 700; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .kpi-icon { position: absolute; top: 16px; right: 16px; opacity: .2; }
+  .kpi-icon svg { width: 28px; height: 28px; }
+
+  .dash-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .section-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Deadline list */
+  .deadline-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .deadline-item:last-child { border-bottom: none; }
+  .deadline-name { font-weight: 500; font-size: 13px; }
+  .deadline-country { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .deadline-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .badge-urgent { background: rgba(239,68,68,.15); color: var(--danger); }
+  .badge-soon { background: rgba(245,158,11,.15); color: var(--warning); }
+  .badge-ok { background: rgba(16,185,129,.15); color: var(--success); }
+
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(245,158,11,.4); }
+    70% { box-shadow: 0 0 0 6px rgba(245,158,11,0); }
+    100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+  }
+  .badge-urgent { animation: pulse-ring 2s infinite; }
+
+  /* ── BOURSE CARDS ── */
+  .bourses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .bourse-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color .15s;
+  }
+  .bourse-card:hover { border-color: rgba(59,130,246,.4); }
+  .bourse-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .bourse-name { font-weight: 600; font-size: 15px; line-height: 1.3; }
+  .bourse-country { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; align-items: center; gap: 4px; }
+  .status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .status-ouverte { background: rgba(16,185,129,.15); color: var(--success); }
+  .status-fermee { background: rgba(239,68,68,.15); color: var(--danger); }
+  .status-bientot { background: rgba(245,158,11,.15); color: var(--warning); }
+  .bourse-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .bourse-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; }
+  .bourse-deadline { font-size: 12px; color: var(--muted); }
+  .bourse-deadline strong { color: var(--text); }
+  .bourse-actions { display: flex; gap: 6px; align-items: center; }
+  .countdown {
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--warning);
+  }
+  .countdown.urgent { color: var(--danger); }
+  .countdown.safe { color: var(--success); }
+
+  /* ── DOCUMENTS ── */
+  .docs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .doc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color .15s;
+  }
+  .doc-card:hover { border-color: rgba(59,130,246,.4); }
+  .doc-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    background: var(--accent-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .doc-icon svg { width: 20px; height: 20px; color: var(--accent); }
+  .doc-info { flex: 1; min-width: 0; }
+  .doc-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .doc-desc { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .doc-status { margin-top: 6px; }
+  .doc-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .doc-dispo { background: rgba(16,185,129,.15); color: var(--success); }
+  .doc-attente { background: rgba(245,158,11,.15); color: var(--warning); }
+  .doc-actions { display: flex; flex-direction: column; gap: 4px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.15);
+  }
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-close {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .modal-close:hover { color: var(--text); background: var(--border); }
+  .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer { padding: 0 24px 20px; display: flex; gap: 8px; justify-content: flex-end; }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  .form-input {
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    width: 100%;
+    transition: border-color .15s;
+  }
+  .form-input:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .form-select {
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    width: 100%;
+    cursor: pointer;
+  }
+  .form-select:focus { outline: none; border-color: var(--accent); }
+  textarea.form-input { resize: vertical; min-height: 80px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state svg { width: 48px; height: 48px; opacity: .3; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── SEARCH / FILTER BAR ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); }
+  .search-input {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px 9px 34px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    width: 100%;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+
+  .filter-select {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .filter-select:focus { outline: none; border-color: var(--accent); }
+
+  /* ── TOAST ── */
+  .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 280px;
+    animation: slideIn .2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    color: var(--text);
+  }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  @keyframes slideIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* ── CONFIRM ── */
+  .confirm-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 1100;
+    align-items: center;
+    justify-content: center;
+  }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 340px;
+    text-align: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    color: var(--text);
+  }
+  .confirm-box h3 { font-size: 16px; margin-bottom: 8px; }
+  .confirm-box p { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .confirm-actions { display: flex; gap: 8px; justify-content: center; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .dash-row { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+    .topbar { padding: 14px 16px; }
+    .bottom-nav {
+      display: flex !important;
+    }
+    .main { padding-bottom: 64px; }
+  }
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    padding: 10px 0;
+    z-index: 100;
+    justify-content: space-around;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.06);
+  }
+  .bn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 12px;
+  }
+  .bn-item.active { color: var(--accent); }
+  .bn-item svg { width: 22px; height: 22px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">Scholar<span>Track</span></div>
+    <div class="logo-sub">Suivi de candidatures</div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Tableau de bord
+    </div>
+    <div class="nav-item" onclick="navigate('bourses')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Bourses
+    </div>
+    <div class="nav-item" onclick="navigate('documents')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Documents
+    </div>
+  </nav>
+  <div class="sidebar-footer">v1.0 — Étudiant</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="topbar-title">Tableau de bord</div>
+      <div class="page-sub" id="topbar-sub">Vue d'ensemble de vos candidatures</div>
+    </div>
+    <div id="topbar-action"></div>
+  </div>
+
+  <div class="content">
+    <!-- PAGE: DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Total bourses</div>
+          <div class="kpi-value" id="kpi-total">0</div>
+          <div class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">Ouvertes</div>
+          <div class="kpi-value" id="kpi-open">0</div>
+          <div class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg></div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-label">Docs disponibles</div>
+          <div class="kpi-value" id="kpi-docs-ok">0</div>
+          <div class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-label">Docs en attente</div>
+          <div class="kpi-value" id="kpi-docs-wait">0</div>
+          <div class="kpi-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg></div>
+        </div>
+      </div>
+
+      <div class="dash-row">
+        <div class="section-card">
+          <div class="section-header">
+            <span>Prochaines deadlines</span>
+          </div>
+          <div id="deadline-list"></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <span>Statut des documents</span>
+          </div>
+          <div id="doc-status-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: BOURSES -->
+    <div class="page" id="page-bourses">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="bourse-search" placeholder="Rechercher une bourse…" oninput="renderBourses()">
+        </div>
+        <select class="filter-select" id="bourse-filter" onchange="renderBourses()">
+          <option value="">Tous les statuts</option>
+          <option value="ouverte">Ouvertes</option>
+          <option value="bientot">Bientôt</option>
+          <option value="fermee">Fermées</option>
+        </select>
+      </div>
+      <div class="bourses-grid" id="bourses-grid"></div>
+    </div>
+
+    <!-- PAGE: DOCUMENTS -->
+    <div class="page" id="page-documents">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="doc-search" placeholder="Rechercher un document…" oninput="renderDocs()">
+        </div>
+        <select class="filter-select" id="doc-filter" onchange="renderDocs()">
+          <option value="">Tous les statuts</option>
+          <option value="Disponible">Disponibles</option>
+          <option value="En attente">En attente</option>
+        </select>
+      </div>
+      <div class="docs-grid" id="docs-grid"></div>
+    </div>
+  </div>
+</main>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav">
+  <div class="bn-item active" id="bn-dashboard" onclick="navigate('dashboard')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Accueil
+  </div>
+  <div class="bn-item" id="bn-bourses" onclick="navigate('bourses')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    Bourses
+  </div>
+  <div class="bn-item" id="bn-documents" onclick="navigate('documents')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+    Docs
+  </div>
+</nav>
+
+<!-- MODAL: Bourse -->
+<div class="modal-overlay" id="modal-bourse">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-bourse-title">Ajouter une bourse</div>
+      <button class="modal-close" onclick="closeModal('modal-bourse')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="bourse-edit-id">
+      <div class="form-group">
+        <label class="form-label">Nom de la bourse *</label>
+        <input class="form-input" id="b-nom" placeholder="ex: Mastercard Foundation">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pays *</label>
+        <input class="form-input" id="b-pays" placeholder="ex: Canada">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lien du site officiel</label>
+        <input class="form-input" id="b-lien" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" id="b-desc" placeholder="Décrivez brièvement la bourse…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deadline *</label>
+        <input type="date" class="form-input" id="b-deadline">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Statut</label>
+        <select class="form-select" id="b-statut">
+          <option value="ouverte"> Ouverte</option>
+          <option value="bientot"> Bientôt fermée</option>
+          <option value="fermee">Fermée</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bourse')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveBourse()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Document -->
+<div class="modal-overlay" id="modal-doc">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-doc-title">Ajouter un document</div>
+      <button class="modal-close" onclick="closeModal('modal-doc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="doc-edit-id">
+      <div class="form-group">
+        <label class="form-label">Nom du document *</label>
+        <input class="form-input" id="d-nom" placeholder="ex: Passeport">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" id="d-desc" placeholder="ex: Passeport valide 2026–2031…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Statut</label>
+        <select class="form-select" id="d-statut">
+          <option value="Disponible">Disponible</option>
+          <option value="En attente">En attente</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-doc')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveDoc()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <h3>Confirmer la suppression</h3>
+    <p id="confirm-msg">Cette action est irréversible.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Annuler</button>
+      <button class="btn btn-danger" id="confirm-btn">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── DATA STORE (localStorage) ──
+const STORE = {
+  get: (k) => JSON.parse(localStorage.getItem(k) || '[]'),
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+
+// SEED DATA
+function seedData() {
+  if (!localStorage.getItem('scholartrack_seeded')) {
+    STORE.set('bourses', [
+      { id: 1, nom: 'Mastercard Foundation Scholars', pays: 'Canada', lien: 'https://mastercardfdn.org/all-programs/scholars/', desc: 'Bourse complète couvrant les frais de scolarité, logement et billets d\'avion pour les étudiants africains talentueux.', deadline: futureDate(12), statut: 'ouverte' },
+      { id: 2, nom: 'Bourse Eiffel Excellence', pays: 'France', lien: 'https://www.campusfrance.org/fr/eiffel', desc: 'Programme d\'excellence du gouvernement français pour attirer les meilleurs étudiants étrangers en master et doctorat.', deadline: futureDate(18), statut: 'ouverte' },
+      { id: 3, nom: 'Erasmus Mundus', pays: 'Union Européenne', lien: 'https://erasmus-plus.ec.europa.eu', desc: 'Programme de bourses de l\'UE pour des études conjointes dans plusieurs universités européennes.', deadline: futureDate(45), statut: 'bientot' },
+      { id: 4, nom: 'DAAD Allemagne', pays: 'Allemagne', lien: 'https://www.daad.de', desc: 'Bourse du service allemand d\'échanges universitaires pour masters et doctorats en Allemagne.', deadline: futureDate(60), statut: 'ouverte' },
+      { id: 5, nom: 'Commonwealth Scholarship', pays: 'Royaume-Uni', lien: 'https://cscuk.fcdo.gov.uk', desc: 'Bourse pour ressortissants des pays du Commonwealth souhaitant poursuivre des études au Royaume-Uni.', deadline: futureDate(5), statut: 'ouverte' },
+      { id: 6, nom: 'Fulbright Program', pays: 'États-Unis', lien: 'https://foreign.fulbrightonline.org', desc: 'Programme phare du gouvernement américain pour les échanges universitaires internationaux.', deadline: futureDate(-10), statut: 'fermee' },
+    ]);
+    STORE.set('documents', [
+      { id: 1, nom: 'Passeport', desc: 'Passeport valide 2024–2029', statut: 'Disponible' },
+      { id: 2, nom: 'Acte de naissance', desc: 'Acte de naissance légalisé', statut: 'Disponible' },
+      { id: 3, nom: 'Diplôme BAC', desc: 'Diplôme du baccalauréat série C', statut: 'Disponible' },
+      { id: 4, nom: 'Relevés de notes L1–L3', desc: 'Relevés de notes des 3 années de licence', statut: 'Disponible' },
+      { id: 5, nom: 'CV académique', desc: 'CV mis à jour – format européen', statut: 'Disponible' },
+      { id: 6, nom: 'Lettre de motivation', desc: 'LM générique à personnaliser', statut: 'En attente' },
+      { id: 7, nom: 'Attestation de langue (TOEFL)', desc: 'Score TOEFL iBT en cours de passage', statut: 'En attente' },
+      { id: 8, nom: 'Lettre de recommandation', desc: 'Lettre du Directeur de mémoire', statut: 'En attente' },
+    ]);
+    localStorage.setItem('scholartrack_seeded', '1');
+  }
+}
+
+function futureDate(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+function daysUntil(dateStr) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const d = new Date(dateStr);
+  return Math.round((d - now) / 86400000);
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// ── NAVIGATION ──
+let currentPage = 'dashboard';
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(n => n.classList.remove('active'));
+
+  document.getElementById('page-' + page).classList.add('active');
+
+  const navItems = document.querySelectorAll('.nav-item');
+  const pages = ['dashboard', 'bourses', 'documents'];
+  navItems[pages.indexOf(page)]?.classList.add('active');
+  document.getElementById('bn-' + page)?.classList.add('active');
+
+  const titles = {
+    dashboard: ['Tableau de bord', 'Vue d\'ensemble de vos candidatures'],
+    bourses: ['Bourses', 'Gérez et suivez vos bourses internationales'],
+    documents: ['Documents', 'Bibliothèque de vos documents de candidature'],
+  };
+  document.getElementById('topbar-title').textContent = titles[page][0];
+  document.getElementById('topbar-sub').textContent = titles[page][1];
+
+  const actions = {
+    dashboard: '',
+    bourses: '<button class="btn btn-primary" onclick="openModal(\'modal-bourse\')"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\' stroke-width=\'3\'><line x1=\'12\' y1=\'5\' x2=\'12\' y2=\'19\'/><line x1=\'5\' y1=\'12\' x2=\'19\' y2=\'12\'/></svg> Ajouter</button>',
+    documents: '<button class="btn btn-primary" onclick="openModal(\'modal-doc\')"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\' stroke-width=\'3\'><line x1=\'12\' y1=\'5\' x2=\'12\' y2=\'19\'/><line x1=\'5\' y1=\'12\' x2=\'19\' y2=\'12\'/></svg> Ajouter</button>',
+  };
+  document.getElementById('topbar-action').innerHTML = actions[page];
+  currentPage = page;
+
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'bourses') renderBourses();
+  if (page === 'documents') renderDocs();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const bourses = STORE.get('bourses');
+  const docs = STORE.get('documents');
+
+  document.getElementById('kpi-total').textContent = bourses.length;
+  document.getElementById('kpi-open').textContent = bourses.filter(b => b.statut === 'ouverte').length;
+  document.getElementById('kpi-docs-ok').textContent = docs.filter(d => d.statut === 'Disponible').length;
+  document.getElementById('kpi-docs-wait').textContent = docs.filter(d => d.statut === 'En attente').length;
+
+  // Deadlines
+  const upcoming = bourses
+    .filter(b => b.statut !== 'fermee')
+    .map(b => ({ ...b, days: daysUntil(b.deadline) }))
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 5);
+
+  const dl = document.getElementById('deadline-list');
+  if (!upcoming.length) {
+    dl.innerHTML = '<div class="empty-state" style="padding:30px"><p>Aucune deadline à venir</p></div>';
+  } else {
+    dl.innerHTML = upcoming.map(b => {
+      const days = b.days;
+      let cls = days <= 7 ? 'badge-urgent' : days <= 30 ? 'badge-soon' : 'badge-ok';
+      let label = days < 0 ? 'Passée' : days === 0 ? 'Aujourd\'hui !' : `${days}j`;
+      return `<div class="deadline-item">
+        <div>
+          <div class="deadline-name">${b.nom}</div>
+          <div class="deadline-country"> ${b.pays}</div>
+        </div>
+        <div class="deadline-badge ${cls}">${label}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Doc status
+  const dsl = document.getElementById('doc-status-list');
+  if (!docs.length) {
+    dsl.innerHTML = '<div class="empty-state" style="padding:30px"><p>Aucun document</p></div>';
+  } else {
+    dsl.innerHTML = docs.slice(0, 6).map(d => `
+      <div class="deadline-item">
+        <div class="deadline-name">${d.nom}</div>
+        <div class="deadline-badge ${d.statut === 'Disponible' ? 'badge-ok' : 'badge-soon'}">${d.statut === 'Disponible' ? '🟢' : '🟠'} ${d.statut}</div>
+      </div>`).join('');
+  }
+}
+
+// ── BOURSES ──
+function renderBourses() {
+  const q = (document.getElementById('bourse-search')?.value || '').toLowerCase();
+  const f = document.getElementById('bourse-filter')?.value || '';
+  let data = STORE.get('bourses')
+    .filter(b => !q || b.nom.toLowerCase().includes(q) || b.pays.toLowerCase().includes(q))
+    .filter(b => !f || b.statut === f)
+    .sort((a, b) => daysUntil(a.deadline) - daysUntil(b.deadline));
+
+  const grid = document.getElementById('bourses-grid');
+  if (!data.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/></svg><p>Aucune bourse trouvée</p></div>`;
+    return;
+  }
+  grid.innerHTML = data.map(b => {
+    const days = daysUntil(b.deadline);
+    const cdClass = days <= 7 ? 'urgent' : days > 30 ? 'safe' : '';
+    const cdLabel = days < 0 ? 'Deadline passée' : days === 0 ? 'Aujourd\'hui !' : `⏱ ${days} jours restants`;
+    const sClass = `status-${b.statut}`;
+    const sLabel = { ouverte: '🟢 Ouverte', fermee: '🔴 Fermée', bientot: '🟡 Bientôt' }[b.statut];
+    return `<div class="bourse-card">
+      <div class="bourse-header">
+        <div>
+          <div class="bourse-name">${b.nom}</div>
+          <div class="bourse-country"> ${b.pays}</div>
+        </div>
+        <div class="status-badge ${sClass}">${sLabel}</div>
+      </div>
+      ${b.desc ? `<div class="bourse-desc">${b.desc}</div>` : ''}
+      <div class="bourse-footer">
+        <div class="bourse-deadline">Deadline : <strong>${formatDate(b.deadline)}</strong></div>
+        <div class="countdown ${cdClass}">${cdLabel}</div>
+      </div>
+      <div class="bourse-actions">
+        ${b.lien ? `<a href="${b.lien}" target="_blank" class="btn btn-ghost btn-sm"> Visiter</a>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="editBourse(${b.id})">Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="askDelete('bourse', ${b.id})"></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── DOCUMENTS ──
+const DOC_ICONS = {
+  default: `<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14,2 14,8 20,8'/></svg>`,
+};
+
+function renderDocs() {
+  const q = (document.getElementById('doc-search')?.value || '').toLowerCase();
+  const f = document.getElementById('doc-filter')?.value || '';
+  let data = STORE.get('documents')
+    .filter(d => !q || d.nom.toLowerCase().includes(q))
+    .filter(d => !f || d.statut === f);
+
+  const grid = document.getElementById('docs-grid');
+  if (!data.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/></svg><p>Aucun document trouvé</p></div>`;
+    return;
+  }
+  grid.innerHTML = data.map(d => {
+    const bdg = d.statut === 'Disponible' ? 'doc-dispo' : 'doc-attente';
+    const emoji = d.statut === 'Disponible' ? '🟢' : '🟠';
+    return `<div class="doc-card">
+      <div class="doc-icon">${DOC_ICONS.default}</div>
+      <div class="doc-info">
+        <div class="doc-name">${d.nom}</div>
+        ${d.desc ? `<div class="doc-desc">${d.desc}</div>` : ''}
+        <div class="doc-status"><span class="doc-badge ${bdg}">${emoji} ${d.statut}</span></div>
+      </div>
+      <div class="doc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editDoc(${d.id})" title="Modifier"></button>
+        <button class="btn btn-danger btn-sm" onclick="askDelete('doc', ${d.id})" title="Supprimer">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ──
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── BOURSE CRUD ──
+function saveBourse() {
+  const nom = document.getElementById('b-nom').value.trim();
+  const pays = document.getElementById('b-pays').value.trim();
+  const deadline = document.getElementById('b-deadline').value;
+  if (!nom || !pays || !deadline) { toast('Remplissez les champs obligatoires *', 'error'); return; }
+
+  const bourses = STORE.get('bourses');
+  const editId = document.getElementById('bourse-edit-id').value;
+  const obj = {
+    nom, pays,
+    lien: document.getElementById('b-lien').value.trim(),
+    desc: document.getElementById('b-desc').value.trim(),
+    deadline,
+    statut: document.getElementById('b-statut').value,
+  };
+
+  if (editId) {
+    const i = bourses.findIndex(b => b.id == editId);
+    bourses[i] = { ...bourses[i], ...obj };
+    toast('Bourse mise à jour ✅', 'success');
+  } else {
+    obj.id = Date.now();
+    bourses.push(obj);
+    toast('Bourse ajoutée ✅', 'success');
+  }
+  STORE.set('bourses', bourses);
+  closeModal('modal-bourse');
+  renderBourses(); renderDashboard();
+}
+
+function editBourse(id) {
+  const b = STORE.get('bourses').find(x => x.id == id);
+  if (!b) return;
+  document.getElementById('modal-bourse-title').textContent = 'Modifier la bourse';
+  document.getElementById('bourse-edit-id').value = id;
+  document.getElementById('b-nom').value = b.nom;
+  document.getElementById('b-pays').value = b.pays;
+  document.getElementById('b-lien').value = b.lien || '';
+  document.getElementById('b-desc').value = b.desc || '';
+  document.getElementById('b-deadline').value = b.deadline;
+  document.getElementById('b-statut').value = b.statut;
+  openModal('modal-bourse');
+}
+
+function openAddBourse() {
+  document.getElementById('modal-bourse-title').textContent = 'Ajouter une bourse';
+  document.getElementById('bourse-edit-id').value = '';
+  ['b-nom','b-pays','b-lien','b-desc','b-deadline'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('b-statut').value = 'ouverte';
+  openModal('modal-bourse');
+}
+
+// ── DOC CRUD ──
+function saveDoc() {
+  const nom = document.getElementById('d-nom').value.trim();
+  if (!nom) { toast('Le nom est obligatoire *', 'error'); return; }
+
+  const docs = STORE.get('documents');
+  const editId = document.getElementById('doc-edit-id').value;
+  const obj = {
+    nom,
+    desc: document.getElementById('d-desc').value.trim(),
+    statut: document.getElementById('d-statut').value,
+  };
+
+  if (editId) {
+    const i = docs.findIndex(d => d.id == editId);
+    docs[i] = { ...docs[i], ...obj };
+    toast('Document mis à jour ✅', 'success');
+  } else {
+    obj.id = Date.now();
+    docs.push(obj);
+    toast('Document ajouté ✅', 'success');
+  }
+  STORE.set('documents', docs);
+  closeModal('modal-doc');
+  renderDocs(); renderDashboard();
+}
+
+function editDoc(id) {
+  const d = STORE.get('documents').find(x => x.id == id);
+  if (!d) return;
+  document.getElementById('modal-doc-title').textContent = 'Modifier le document';
+  document.getElementById('doc-edit-id').value = id;
+  document.getElementById('d-nom').value = d.nom;
+  document.getElementById('d-desc').value = d.desc || '';
+  document.getElementById('d-statut').value = d.statut;
+  openModal('modal-doc');
+}
+
+// ── DELETE ──
+let pendingDelete = null;
+function askDelete(type, id) {
+  pendingDelete = { type, id };
+  document.getElementById('confirm-msg').textContent =
+    type === 'bourse' ? 'Supprimer cette bourse ? Cette action est irréversible.' : 'Supprimer ce document ? Cette action est irréversible.';
+  document.getElementById('confirm-overlay').classList.add('open');
+  document.getElementById('confirm-btn').onclick = doDelete;
+}
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+  pendingDelete = null;
+}
+function doDelete() {
+  if (!pendingDelete) return;
+  const { type, id } = pendingDelete;
+  if (type === 'bourse') {
+    STORE.set('bourses', STORE.get('bourses').filter(b => b.id != id));
+    renderBourses(); renderDashboard();
+    toast('Bourse supprimée', 'success');
+  } else {
+    STORE.set('documents', STORE.get('documents').filter(d => d.id != id));
+    renderDocs(); renderDashboard();
+    toast('Document supprimé', 'success');
+  }
+  closeConfirm();
+}
+
+// ── TOAST ──
+function toast(msg, type = 'success') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// Close modals on overlay click
+['modal-bourse', 'modal-doc'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target === document.getElementById(id)) closeModal(id);
+  });
+});
+
+// Intercept "Ajouter" button for bourse to reset form
+document.addEventListener('click', e => {
+  if (e.target.closest('[onclick="openModal(\'modal-bourse\')"]')) {
+    openAddBourse();
+    e.stopImmediatePropagation();
+  }
+  if (e.target.closest('[onclick="openModal(\'modal-doc\')"]')) {
+    document.getElementById('modal-doc-title').textContent = 'Ajouter un document';
+    document.getElementById('doc-edit-id').value = '';
+    ['d-nom','d-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('d-statut').value = 'Disponible';
+  }
+});
+
+// ── INIT ──
+seedData();
+renderDashboard();
+</script>
+</body>
+</html>
